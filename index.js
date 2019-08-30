@@ -61,7 +61,7 @@ const trainingDataSet2 = [{
 
 
 let net;
-const webcamElement = document.getElementById('webcam');
+const videoElement = document.getElementById('myVideo');
 const classifier = knnClassifier.create();
 
 async function app(trainingData) {
@@ -78,8 +78,8 @@ async function app(trainingData) {
             for (const t of timeArray) {
                 i++;
                 console(`Training ${classId} ${i}/${timeArray.length} <BR>Using first 5 minutes`);
-                webcamElement.currentTime = t;
-                const myActivation = net.infer(webcamElement, 'conv_preds');
+                videoElement.currentTime = t;
+                const myActivation = net.infer(videoElement, 'conv_preds');
                 classifier.addExample(myActivation, classId);
                 await sleep(.2);
             }
@@ -88,13 +88,13 @@ async function app(trainingData) {
 
     await addExample(trainingData);
 
-    webcamElement.currentTime = 0;
-    webcamElement.play();
+    videoElement.currentTime = 0;
+    videoElement.play();
 
     while (true) {
         if (classifier.getNumClasses() > 0) {
             // Get the activation from mobilenet from the webcam.
-            const activation = net.infer(webcamElement, 'conv_preds');
+            const activation = net.infer(videoElement, 'conv_preds');
 
             // Get the most likely class and confidences from the classifier module.
             const result = await classifier.predictClass(activation);
@@ -124,28 +124,5 @@ function console(string) {
     document.getElementById('console').innerHTML = string;
 }
 
-async function loadLocalImage(filename, sampleName) {
-    return new Promise((resolve) => {
-        try {
-            const img = new Image()
-            img.onload = () => {
-                ctx.drawImage(img, 0, 0);
-                let image = tf.browser.fromPixels(canvas);
-                console.log(image);
-                const activation = net.infer(img, 'conv_preds');
-                console.log(activation);
-                classifier.addExample(activation, sampleName);
-                return resolve(null);
-            }
-            img.onerror = err => {
-                throw err
-            };
-            img.src = filename;
-
-        } catch (err) {
-            console.log(err);
-        }
-    })
-}
 
 app(trainingDataSet2);
